@@ -57,21 +57,28 @@ solution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
 def calculate_cost(permutation):
     cost = 0
     for i in range(len(permutation)):
-        for j in range(i+1, N):
+        for j in range(len(permutation)):
             cost += flow[permutation[i]][permutation[j]] * distance[i][j]
     return cost
 
 for k in range(max_iterations):
     tabu = [[0 for x in range(N)] for y in range(N)] 
     solution_set = []
+
+
+    print("****************Iteration", k, " *****************")
+    print(solution)
+    print(calculate_cost(solution))
+
+
     for i in solution:
         for j in range(i+1, N):
             # swap positions of solution
-            solution_copy = solution
+            solution_copy = list(solution)
             solution_copy[i], solution_copy[j] = solution_copy[j], solution_copy[i]
 
             # store calculated cost in solution_set array in the for {(swapped flow indices): cost}
-            solution_set.append({"swapped" : (min(solution_copy[i],solution_copy[j]), max(solution_copy[i],solution_copy[j])), "cost" : calculate_cost(solution_copy)})
+            solution_set.append({"swap indices" : (i,j), "swap department values" : (min(solution_copy[i],solution_copy[j]), max(solution_copy[i],solution_copy[j])), "cost" : calculate_cost(solution_copy)})
             solution_set = sorted(solution_set, key=lambda d: d['cost'])
 
     # decrement all tabu values by 1
@@ -82,14 +89,18 @@ for k in range(max_iterations):
 
     # take lowest cost swap from solution_set (which isn't in tabu) and apply swap
     for i in range(len(solution_set)):
-        idx1 = solution_set[i]["swapped"][0]
-        idx2 = solution_set[i]["swapped"][1]
+        idx1 = solution_set[i]["swap indices"][0]
+        idx2 = solution_set[i]["swap indices"][1]
+        val1 = solution_set[i]["swap department values"][0]
+        val2 = solution_set[i]["swap department values"][1]
         if tabu[idx1][idx2] == 0:
+            print("swapped index: ", idx1, ",", idx2)
+            print("swapped value: ", val1, ",", val2)
+
             # perform swap and set tabu value
             solution[idx1], solution[idx2] = solution[idx2], solution[idx1]
             tabu[idx1][idx2] += ban_count
             break
 
-    print("iteration", k)
-    print(solution)
-    print(calculate_cost(solution))
+
+
