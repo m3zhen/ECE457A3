@@ -1,8 +1,13 @@
 import math
+import random
 
-max_iterations = 10
+random.seed(10)
+
+max_iterations = 50
 N = 20
 ban_count = math.floor(math.sqrt(N))
+best_so_far_criteria = False
+best_neighbourhood_criteria = False
 
 flow = [
     [0,0,5,0,5,2,10,3,1,5,5,5,0,0,5,4,4,0,0,1],
@@ -61,46 +66,92 @@ def calculate_cost(permutation):
             cost += flow[permutation[i]][permutation[j]] * distance[i][j]
     return cost
 
-for k in range(max_iterations):
+def TS():
+    best_so_far = float('inf')
+
     tabu = [[0 for x in range(N)] for y in range(N)] 
-    solution_set = []
+    for k in range(max_iterations):
+        solution_set = []
+
+        print("****************Iteration", k, " ***************************")
+        print(solution)
+        print(calculate_cost(solution))
+
+        for i in solution:
+            for j in range(i+1, N):
+                # swap positions of solution
+                solution_copy = list(solution)
+                solution_copy[i], solution_copy[j] = solution_copy[j], solution_copy[i]
+
+                # store calculated cost in solution_set array in the for {(swapped flow indices): cost}
+                solution_set.append({"swap department values" : (min(solution_copy[i],solution_copy[j]), max(solution_copy[i],solution_copy[j])), "swap indices" : (i,j), "cost" : calculate_cost(solution_copy)})
+                solution_set = sorted(solution_set, key=lambda d: d['cost'])
+        print("top candidates: ", solution_set[:5])
+        # decrement all tabu values by 1
+        for i in range(N):
+            for j in range(N):
+                if tabu[i][j] > 0:
+                    print("tabu index: ", (i,j), "tabu value: ", tabu[i][j])
+                    tabu[i][j] -= 1
+
+        # take lowest cost swap from solution_set (which isn't in tabu) and apply swap
+        for i in range(len(solution_set)):
+            idx1 = solution_set[i]["swap indices"][0]
+            idx2 = solution_set[i]["swap indices"][1]
+            val1 = solution_set[i]["swap department values"][0]
+            val2 = solution_set[i]["swap department values"][1]
+            if tabu[val1][val2] == 0 or best_neighbourhood_criteria or (best_so_far_criteria and solution_set[i]["cost"] <= best_so_far):
+                print("swapped index: ", idx1, ",", idx2)
+                print("swapped value: ", val1, ",", val2)
+
+                # perform swap and set tabu value
+                solution[idx1], solution[idx2] = solution[idx2], solution[idx1]
+                tabu[val1][val2] = ban_count
+
+                if(best_so_far_criteria and solution_set[i]["cost"] <= best_so_far):
+                    print("BEST SO FAR FOUND")
+                    best_so_far = solution_set[i]["cost"]
+                break
+        
+    print("--------------------------------------------------------------------------------")
+    return(calculate_cost(solution))
+
+# Base TS Function
+ts = TS()
+
+# # 10 variations of initial solution
+# initial_variations = []
+# for l in range(10):
+#     random.shuffle(solution)
+#     initial_variations.append(TS())
+
+# # check with varying tabu tenure
+# solution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+# ban_count = 2
+# tenureLow = TS()
+# ban_count = 9
+# tenureHigh = TS()
+
+# check with aspiration criterias
+solution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+best_neighbourhood_criteria = True
+best_neighbourhood_res = TS()
+best_neighbourhood_criteria = False
+
+solution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+best_so_far_criteria = True
+best_so_far_res = TS()
+best_so_far_criteria = False
 
 
-    print("****************Iteration", k, " *****************")
-    print(solution)
-    print(calculate_cost(solution))
+print("base ts function: ", ts)
 
+# print("Costs of variations: ", initial_variations)
 
-    for i in solution:
-        for j in range(i+1, N):
-            # swap positions of solution
-            solution_copy = list(solution)
-            solution_copy[i], solution_copy[j] = solution_copy[j], solution_copy[i]
+# print("Costs with tenure 2: ", tenureLow)
 
-            # store calculated cost in solution_set array in the for {(swapped flow indices): cost}
-            solution_set.append({"swap indices" : (i,j), "swap department values" : (min(solution_copy[i],solution_copy[j]), max(solution_copy[i],solution_copy[j])), "cost" : calculate_cost(solution_copy)})
-            solution_set = sorted(solution_set, key=lambda d: d['cost'])
+# print("Costs with tenure 9: ", tenureHigh)
 
-    # decrement all tabu values by 1
-    for i in range(N):
-        for j in range(N):
-            if tabu[i][j] > 0:
-                tab[i][j] -= 1
+print("best in neighbourhood aspiration: ", best_neighbourhood_res)
 
-    # take lowest cost swap from solution_set (which isn't in tabu) and apply swap
-    for i in range(len(solution_set)):
-        idx1 = solution_set[i]["swap indices"][0]
-        idx2 = solution_set[i]["swap indices"][1]
-        val1 = solution_set[i]["swap department values"][0]
-        val2 = solution_set[i]["swap department values"][1]
-        if tabu[idx1][idx2] == 0:
-            print("swapped index: ", idx1, ",", idx2)
-            print("swapped value: ", val1, ",", val2)
-
-            # perform swap and set tabu value
-            solution[idx1], solution[idx2] = solution[idx2], solution[idx1]
-            tabu[idx1][idx2] += ban_count
-            break
-
-
-
+print("best so far aspiration: ", best_so_far_res)
