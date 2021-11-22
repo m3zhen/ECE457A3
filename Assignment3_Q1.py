@@ -5,9 +5,10 @@ random.seed(10)
 
 max_iterations = 50
 N = 20
-ban_count = math.floor(math.sqrt(N))
 best_so_far_criteria = False
 best_neighbourhood_criteria = False
+dynamic_tabu_list = False
+ban_count = math.floor(math.sqrt(N))
 
 flow = [
     [0,0,5,0,5,2,10,3,1,5,5,5,0,0,5,4,4,0,0,1],
@@ -67,6 +68,9 @@ def calculate_cost(permutation):
     return cost
 
 def TS():
+    change_count = 10
+    dynamic_ban_count = random.randint(1,10)
+
     best_so_far = float('inf')
 
     tabu = [[0 for x in range(N)] for y in range(N)] 
@@ -106,10 +110,19 @@ def TS():
 
                 # perform swap and set tabu value
                 solution[idx1], solution[idx2] = solution[idx2], solution[idx1]
-                tabu[val1][val2] = ban_count
+
+                if(not dynamic_tabu_list):
+                    tabu[val1][val2] = ban_count
+                else:
+                    if(change_count == 0): 
+                        dynamic_ban_count = random.randint(1,10)
+                        change_count = 10
+                    change_count -= 1
+
+                    tabu[val1][val2] = dynamic_ban_count
+                    
 
                 if(best_so_far_criteria and solution_set[i]["cost"] <= best_so_far):
-                    print("BEST SO FAR FOUND")
                     best_so_far = solution_set[i]["cost"]
                 break
         
@@ -120,17 +133,23 @@ def TS():
 ts = TS()
 
 # # 10 variations of initial solution
-# initial_variations = []
-# for l in range(10):
-#     random.shuffle(solution)
-#     initial_variations.append(TS())
+initial_variations = []
+for l in range(10):
+    random.shuffle(solution)
+    initial_variations.append(TS())
 
 # # check with varying tabu tenure
-# solution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
-# ban_count = 2
-# tenureLow = TS()
-# ban_count = 9
-# tenureHigh = TS()
+solution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+ban_count = 2
+tenureLow = TS()
+solution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+ban_count = 9
+tenureHigh = TS()
+
+#check with dynamic tabu list size
+solution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+dynamic_tabu_list = True
+dynamicTabu = TS()
 
 # check with aspiration criterias
 solution = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
@@ -146,11 +165,13 @@ best_so_far_criteria = False
 
 print("base ts function: ", ts)
 
-# print("Costs of variations: ", initial_variations)
+print("Costs of variations: ", initial_variations)
 
-# print("Costs with tenure 2: ", tenureLow)
+print("Costs with tenure 2: ", tenureLow)
 
-# print("Costs with tenure 9: ", tenureHigh)
+print("Costs with tenure 9: ", tenureHigh)
+
+print("Dyamic tabu list size: ", dynamicTabu)
 
 print("best in neighbourhood aspiration: ", best_neighbourhood_res)
 
